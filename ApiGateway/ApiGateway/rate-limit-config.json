@@ -1,0 +1,16 @@
+{
+  "Global": {
+    "Limit": 10,
+    "PeriodSeconds": 20
+  },
+  "Region": {
+    "ru": {
+      "Limit": 4,
+      "PeriodSeconds": 60
+    },
+    "eu-west": {
+      "Limit": 30,
+      "PeriodSeconds": 45
+    }
+  }
+}
