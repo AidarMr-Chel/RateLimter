@@ -1,10 +1,12 @@
 ﻿
+using ApiGateway.RateLimiting.core;
 using ApiGateway.Redis;
 
 namespace ApiGateway.RateLimiting.strategies;
 
 public class FixedWindowStrategy : IRateLimitingStrategy
 {
+    public string Name => "FixedWindow";
     private readonly IRateLimitStore _store;
 
     public FixedWindowStrategy(IRateLimitStore store)

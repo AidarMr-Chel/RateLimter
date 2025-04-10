@@ -12,7 +12,6 @@ public class RateLimitConfigLoader
         var json = File.ReadAllText(filePath);
         _config = JsonSerializer.Deserialize<RateLimitConfig>(json)
              ?? throw new Exception("Invalid rate-limit-config.json");
-        Console.WriteLine($"Global лимит: {_config.Global.Limit}");
     }
 
     public RateLimitRule GetRule(string? region = null)

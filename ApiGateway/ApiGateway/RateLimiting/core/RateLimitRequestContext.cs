@@ -1,4 +1,4 @@
-﻿namespace ApiGateway.RateLimiting;
+﻿namespace ApiGateway.RateLimiting.core;
 
 public class RateLimitRequestContext
 {
@@ -6,7 +6,7 @@ public class RateLimitRequestContext
     public int Limit { get; set; }
     public TimeSpan Period { get; set; }
 
-    
+
     public string? Region { get; set; }
     public string? UserAgent { get; set; }
     public string? Path { get; set; }

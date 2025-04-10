@@ -1,16 +1,19 @@
 {
   "Global": {
     "Limit": 10,
-    "PeriodSeconds": 20
+    "PeriodSeconds": 20,
+    "StrategyName": "FixedWindow"
   },
   "Region": {
     "ru": {
       "Limit": 4,
-      "PeriodSeconds": 60
+      "PeriodSeconds": 60,
+      "StrategyName": "FixedWindow"
     },
     "eu-west": {
       "Limit": 30,
-      "PeriodSeconds": 45
+      "PeriodSeconds": 45,
+      "StrategyName": "FixedWindow"
     }
   }
 }

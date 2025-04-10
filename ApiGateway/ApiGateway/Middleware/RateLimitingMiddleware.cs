@@ -1,21 +1,21 @@
 ﻿using ApiGateway.ConfigLoader;
-using ApiGateway.RateLimiting;
+using ApiGateway.RateLimiting.core;
 
 namespace ApiGateway.Middleware;
 
 public class RateLimitingMiddleware
 {
     private readonly RequestDelegate _next;
-    private readonly IRateLimitingStrategy _strategy;
+    private readonly IRateLimitingStrategySelector _strategies;
     private readonly IRateLimitConfigProvider _providerConfig;
 
     public RateLimitingMiddleware(
         RequestDelegate next, 
-        IRateLimitingStrategy strategy, 
+        IRateLimitingStrategySelector strategies, 
         IRateLimitConfigProvider providerConfig)
     {
         _next = next;
-        _strategy = strategy;
+        _strategies = strategies;
         _providerConfig = providerConfig;
     }
 
@@ -31,11 +31,12 @@ public class RateLimitingMiddleware
             Limit = rule.Limit,
             Period = rule.Period,
         };
-        Console.WriteLine(region);
-        Console.WriteLine(rateLimitContext.Limit);
-        Console.WriteLine(rateLimitContext.Period);
 
-        var allowed = await _strategy.IsRequestAllowedAsync(rateLimitContext);
+        var allowed = await _strategies
+            .GetStrategy(rule.StrategyName)
+            .IsRequestAllowedAsync(rateLimitContext);
+
+        Console.WriteLine(rule.StrategyName);
         if (!allowed) 
         { 
             context.Response.StatusCode = StatusCodes.Status429TooManyRequests;

@@ -1,10 +1,11 @@
-using ApiGateway.RateLimiting;
 using ApiGateway.Middleware;
 using ApiGateway.RateLimiting.strategies;
 using ApiGateway.Redis;
 using Serilog;
 using ApiGateway.ConfigLoader;
 using ApiGateway.ConfigLoader.providers.jsonConfig;
+using ApiGateway.RateLimiting.core;
+using ApiGateway.RateLimiting.Selector;
 
 namespace ApiGateway;
 
@@ -27,13 +28,18 @@ public class Program
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
-            builder.Services.AddSingleton<IRateLimitStore, InMemoryRateLimitStore>();
-            builder.Services.AddSingleton<IRateLimitingStrategy, FixedWindowStrategy>();
-            builder.Services.AddSingleton<IRateLimitConfigProvider, JsonRateLimitConfigProvider>();
-
+            
             var configLoader = new RateLimitConfigLoader("rate-limit-config.json");
             builder.Services.AddSingleton(configLoader);    
+            builder.Services.AddSingleton<IRateLimitConfigProvider, JsonRateLimitConfigProvider>();
+            
+            builder.Services.AddSingleton<IRateLimitStore, InMemoryRateLimitStore>();
 
+            builder.Services.AddSingleton<IRateLimitingStrategy, FixedWindowStrategy>();
+            
+
+
+            builder.Services.AddSingleton<IRateLimitingStrategySelector, RateLimitingStrategySelector>();
 
 
             var app = builder.Build();
