@@ -10,8 +10,8 @@ public class JsonRateLimitConfigProvider : IRateLimitConfigProvider
     {
         _loader = loader;
     }
-    public RateLimitRule GetRule(string? region = null)
+    public RateLimitRule GetRule(HttpContext context)
     {
-        return _loader.GetRule(region);
+        return _loader.GetRule(context);
     }
 }

@@ -6,6 +6,8 @@ using ApiGateway.ConfigLoader;
 using ApiGateway.ConfigLoader.providers.jsonConfig;
 using ApiGateway.RateLimiting.core;
 using ApiGateway.RateLimiting.Selector;
+using ApiGateway.ConfigLoader.extractFilterValues;
+using ApiGateway.ConfigLoader.keyBuild;
 
 namespace ApiGateway;
 
@@ -29,17 +31,21 @@ public class Program
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
             
-            var configLoader = new RateLimitConfigLoader("rate-limit-config.json");
-            builder.Services.AddSingleton(configLoader);    
+            builder.Services.AddSingleton<IRequestFilterValueExtractor, DefaultRequestFilterValueExtractor>();
+
+            builder.Services.AddSingleton<IRateLimitConfigProvider>(sp =>
+            {
+                var extractor = sp.GetRequiredService<IRequestFilterValueExtractor>();
+                var configPath = "rate-limit-config.json";
+                var loader = new RateLimitConfigLoader(configPath, extractor);
+                return new JsonRateLimitConfigProvider(loader);
+            });  
+            
             builder.Services.AddSingleton<IRateLimitConfigProvider, JsonRateLimitConfigProvider>();
-            
             builder.Services.AddSingleton<IRateLimitStore, InMemoryRateLimitStore>();
-
             builder.Services.AddSingleton<IRateLimitingStrategy, FixedWindowStrategy>();
-            
-
-
             builder.Services.AddSingleton<IRateLimitingStrategySelector, RateLimitingStrategySelector>();
+            builder.Services.AddSingleton<IKeyBuilder, DefaultKeyBuilder>();
 
 
             var app = builder.Build();

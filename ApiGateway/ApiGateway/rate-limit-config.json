@@ -1,19 +1,27 @@
 {
-  "Global": {
-    "Limit": 10,
-    "PeriodSeconds": 20,
-    "StrategyName": "FixedWindow"
-  },
-  "Region": {
-    "ru": {
+  "Rules": [
+    {
+      "Filters": {
+        "Ip": "1.2.3.4"
+      },
       "Limit": 4,
       "PeriodSeconds": 60,
       "StrategyName": "FixedWindow"
     },
-    "eu-west": {
-      "Limit": 30,
-      "PeriodSeconds": 45,
+    {
+      "Filters": {
+        "Region": "ru"
+      },
+      "Limit": 10,
+      "PeriodSeconds": 30,
+      "StrategyName": "FixedWindow"
+    },
+    {
+      "Filters": {},
+      "Limit": 100,
+      "PeriodSeconds": 60,
       "StrategyName": "FixedWindow"
     }
-  }
+  ]
 }
+
