@@ -16,7 +16,7 @@ public class DefaultKeyBuilder : IKeyBuilder
     {
         var parts = new List<string>();
 
-        foreach (var filter in rule.Filters)
+        foreach (var filter in rule.Filters.OrderBy(kvp => kvp.Key))
         {
             var value = _extractor.Extract(filter.Key, context);
             if (!string.IsNullOrWhiteSpace(value))
@@ -31,6 +31,6 @@ public class DefaultKeyBuilder : IKeyBuilder
             parts.Add($"ip:{ip}");
         }
 
-        return string.Join("|", parts);
+        return "rate-limit:" + string.Join(":", parts);
     }
 }

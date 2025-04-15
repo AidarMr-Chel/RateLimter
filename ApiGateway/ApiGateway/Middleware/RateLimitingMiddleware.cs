@@ -1,5 +1,6 @@
 ﻿using ApiGateway.ConfigLoader;
 using ApiGateway.ConfigLoader.keyBuild;
+using ApiGateway.Logging;
 using ApiGateway.RateLimiting.core;
 
 namespace ApiGateway.Middleware;
@@ -10,22 +11,25 @@ public class RateLimitingMiddleware
     private readonly IRateLimitingStrategySelector _strategies;
     private readonly IRateLimitConfigProvider _providerConfig;
     private readonly IKeyBuilder _keyBuilder;
+    private readonly ILogService _logService;
 
     public RateLimitingMiddleware(
         RequestDelegate next, 
         IRateLimitingStrategySelector strategies, 
         IRateLimitConfigProvider providerConfig,
-        IKeyBuilder keyBuilder)
+        IKeyBuilder keyBuilder,
+        ILogService logService)
     {
         _next = next;
         _strategies = strategies;
         _providerConfig = providerConfig;
         _keyBuilder = keyBuilder;
+        _logService = logService;
     }
 
     public async Task InvokeAsync(HttpContext context)
     {
-        var rule = _providerConfig.GetRule(context);
+        var rule = await _providerConfig.GetRule(context);
         var key = _keyBuilder.BuildKey(rule, context);
 
         var rateLimitContext = new RateLimitRequestContext
@@ -42,11 +46,22 @@ public class RateLimitingMiddleware
         if (!allowed) 
         { 
             context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+
+            await _logService.LogAsync(new RateLimitLogEntry
+            {
+                Timestamp = DateTime.UtcNow,
+                Ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                Region = context.Request.Headers["X-Region"].ToString(),
+                Path = context.Request.Path,
+                StatusCode = 429,
+                Reason = "RateLimitExceeded",
+                UserAgent = context.Request.Headers["User-Agent"].ToString()
+            });
+
             await context.Response.WriteAsync("Too Many Requests (rate limit exceeded)");
             return;
         }
 
         await _next(context);
     }
-
 }

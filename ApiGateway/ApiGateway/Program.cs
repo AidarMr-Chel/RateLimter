@@ -3,11 +3,13 @@ using ApiGateway.RateLimiting.strategies;
 using ApiGateway.Redis;
 using Serilog;
 using ApiGateway.ConfigLoader;
-using ApiGateway.ConfigLoader.providers.jsonConfig;
 using ApiGateway.RateLimiting.core;
 using ApiGateway.RateLimiting.Selector;
 using ApiGateway.ConfigLoader.extractFilterValues;
 using ApiGateway.ConfigLoader.keyBuild;
+using StackExchange.Redis;
+using ApiGateway.ConfigLoader.providers.redis;
+using ApiGateway.Logging;
 
 namespace ApiGateway;
 
@@ -36,16 +38,21 @@ public class Program
             builder.Services.AddSingleton<IRateLimitConfigProvider>(sp =>
             {
                 var extractor = sp.GetRequiredService<IRequestFilterValueExtractor>();
-                var configPath = "rate-limit-config.json";
-                var loader = new RateLimitConfigLoader(configPath, extractor);
-                return new JsonRateLimitConfigProvider(loader);
+                var redis = sp.GetRequiredService<IConnectionMultiplexer>();
+                return new RedisRateLimitConfigProvider(redis, extractor);
             });  
             
-            builder.Services.AddSingleton<IRateLimitConfigProvider, JsonRateLimitConfigProvider>();
-            builder.Services.AddSingleton<IRateLimitStore, InMemoryRateLimitStore>();
             builder.Services.AddSingleton<IRateLimitingStrategy, FixedWindowStrategy>();
             builder.Services.AddSingleton<IRateLimitingStrategySelector, RateLimitingStrategySelector>();
             builder.Services.AddSingleton<IKeyBuilder, DefaultKeyBuilder>();
+
+            builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+            {
+                return ConnectionMultiplexer.Connect("localhost:6380"); 
+            });
+
+            builder.Services.AddSingleton<IRateLimitStore, RedisRateLimitStore>();
+            builder.Services.AddSingleton<ILogService, MongoLogService>();
 
 
             var app = builder.Build();

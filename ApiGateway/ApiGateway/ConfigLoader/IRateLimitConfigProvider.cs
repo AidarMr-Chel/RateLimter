@@ -4,5 +4,5 @@ namespace ApiGateway.ConfigLoader;
 
 public interface IRateLimitConfigProvider
 {
-    RateLimitRule GetRule(HttpContext context);
+    Task<RateLimitRule> GetRule(HttpContext context);
 }

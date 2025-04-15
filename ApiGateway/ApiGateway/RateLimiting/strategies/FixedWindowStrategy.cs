@@ -17,17 +17,16 @@ public class FixedWindowStrategy : IRateLimitingStrategy
     public async Task<bool> IsRequestAllowedAsync(RateLimitRequestContext context)
     {
         var key = context.Key;
-        var expiry = await _store.GetExpireAsync(key);
+        Console.WriteLine($"{key} {context.Period.TotalSeconds}");
+        var count = await _store.IncrementAsync(key);
 
-        if (expiry == null || expiry < DateTime.UtcNow)
+        if (count == 1)
         {
             await _store.SetExpireAsync(key, context.Period);
-            await _store.SetCountAsync(key, 0);
         }
 
-        await _store.IncrementAsync(key);
-        var countNow = await _store.GetCountAsync(key);
-        Console.WriteLine(countNow);
-        return countNow <= context.Limit;
+        Console.WriteLine(count);
+        return count <= context.Limit;
     }
+
 }

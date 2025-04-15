@@ -2,7 +2,7 @@
   "Rules": [
     {
       "Filters": {
-        "Ip": "1.2.3.4"
+        "Ip": [ "1.2.3.4" ]
       },
       "Limit": 4,
       "PeriodSeconds": 60,
@@ -10,10 +10,10 @@
     },
     {
       "Filters": {
-        "Region": "ru"
+        "Region": [ "ru" ]
       },
-      "Limit": 10,
-      "PeriodSeconds": 30,
+      "Limit": 5,
+      "PeriodSeconds": 60,
       "StrategyName": "FixedWindow"
     },
     {
