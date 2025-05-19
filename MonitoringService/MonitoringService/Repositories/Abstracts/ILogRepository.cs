@@ -1,0 +1,13 @@
+﻿using MonitoringService.Models;
+
+
+namespace MonitoringService.Repositories.Abstracts
+{
+    public interface ILogRepository
+    {
+        Task<LogEntry> GetByIdAsync(string id);
+        Task<List<LogEntry>> GetLatestLogsAsync(int take);
+        Task<List<LogEntry>> GetFilteredLogsAsync(LogFilter filter);
+
+    }
+}
