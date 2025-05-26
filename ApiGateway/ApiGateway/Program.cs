@@ -9,7 +9,16 @@ using ApiGateway.ConfigLoader.extractFilterValues;
 using ApiGateway.ConfigLoader.keyBuild;
 using StackExchange.Redis;
 using ApiGateway.ConfigLoader.providers.redis;
-using ApiGateway.Logging;
+using ApiGateway.Proxying;
+using ApiGateway.Logging.models;
+using ApiGateway.Logging.abstracts;
+using ApiGateway.Logging.services;
+using ApiGateway.Options;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using ApiGateway.Proxying.policies;
+
 
 namespace ApiGateway;
 
@@ -17,42 +26,70 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        Log.Logger = new LoggerConfiguration()
-            .MinimumLevel.Information()
-            .WriteTo.File("logs/request.log", rollingInterval: RollingInterval.Day)
-            .CreateLogger();
-
-        try 
-        {
-            Log.Information("Starting up API Gateway");
-
             var builder = WebApplication.CreateBuilder(args);
+            var config = builder.Configuration;
+            var services = builder.Services;
 
-            builder.Host.UseSerilog();
-            builder.Services.AddControllers();
-            builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
+            services.AddControllers();
+            services.AddEndpointsApiExplorer();
+            services.AddSwaggerGen();
+
+            services.Configure<JwtOptions>(config.GetSection("Jwt"));
+            services.Configure<ProxyLogOptions>(config.GetSection("ProxyLog"));
+            services.Configure<MongoSettings>(config.GetSection("Mongo"));
+
+            services.AddSingleton<TokenValidationParameters>(sp =>
+            {
+                var jwt = sp.GetRequiredService<IOptions<JwtOptions>>().Value;
+
+                return new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+
+                    ValidIssuer = jwt.Issuer,
+                    ValidAudience = jwt.Audience,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.Secret))
+                };
+            });
             
-            builder.Services.AddSingleton<IRequestFilterValueExtractor, DefaultRequestFilterValueExtractor>();
-
-            builder.Services.AddSingleton<IRateLimitConfigProvider>(sp =>
+            
+            services.AddSingleton<IRequestFilterValueExtractor, DefaultRequestFilterValueExtractor>();
+            services.AddSingleton<IRateLimitingStrategy, FixedWindowStrategy>();
+            services.AddSingleton<IRateLimitingStrategySelector, RateLimitingStrategySelector>();
+            services.AddSingleton<IKeyBuilder, DefaultKeyBuilder>();
+        
+            services.AddSingleton<IConnectionMultiplexer>(sp =>
+            {
+                return ConnectionMultiplexer.Connect("localhost:6380"); 
+            });
+        
+            services.AddSingleton<IRateLimitStore, RedisRateLimitStore>();
+            services.AddSingleton<IRateLimitConfigProvider>(sp =>
             {
                 var extractor = sp.GetRequiredService<IRequestFilterValueExtractor>();
                 var redis = sp.GetRequiredService<IConnectionMultiplexer>();
                 return new RedisRateLimitConfigProvider(redis, extractor);
             });  
-            
-            builder.Services.AddSingleton<IRateLimitingStrategy, FixedWindowStrategy>();
-            builder.Services.AddSingleton<IRateLimitingStrategySelector, RateLimitingStrategySelector>();
-            builder.Services.AddSingleton<IKeyBuilder, DefaultKeyBuilder>();
+        
+            services.AddSingleton<ILogWriter, MongoLogWriter>();
+            services.AddSingleton<IMasterLogService, MasterLogService>();
 
-            builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+            services.AddHttpContextAccessor();
+            services.AddSingleton<PolicyFactory>();
+            services.AddHttpClient("UserApiClient", client =>
             {
-                return ConnectionMultiplexer.Connect("localhost:6380"); 
+                client.BaseAddress = new Uri("http://localhost:5276");
+            })
+            .AddPolicyHandler((sp, req) =>
+            {
+                return sp.GetRequiredService<PolicyFactory>().CreatePolicy();
             });
 
-            builder.Services.AddSingleton<IRateLimitStore, RedisRateLimitStore>();
-            builder.Services.AddSingleton<ILogService, MongoLogService>();
+            services.AddScoped<IProxyService, ProxyService>();
+
 
 
             var app = builder.Build();
@@ -63,23 +100,12 @@ public class Program
                 app.UseSwaggerUI();
             }
 
+            app.UseMiddleware<JwtAuthMiddleware>();
             app.UseMiddleware<RateLimitingMiddleware>();
-            app.UseHttpsRedirection();
             app.UseAuthorization();
             app.MapControllers();
+            app.UseMiddleware<ExceptionMiddleware>();
             app.Run();
-        }
-        catch (Exception ex)
-        {
-            Log.Fatal(ex, "Application failed to start.");
-        }
-        finally
-        {
-            Log.CloseAndFlush(); 
-        }
-
-
-
 
 
     }

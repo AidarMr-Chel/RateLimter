@@ -1,4 +1,5 @@
 ﻿using MonitoringService.Models;
+using MonitoringService.Models.loging;
 using MonitoringService.Repositories;
 using MonitoringService.Repositories.Abstracts;
 using MonitoringService.Services.Absrtacts;

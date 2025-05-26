@@ -13,7 +13,7 @@
         "Region": [ "ru" ]
       },
       "Limit": 5,
-      "PeriodSeconds": 60,
+      "PeriodSeconds": 30,
       "StrategyName": "FixedWindow"
     },
     {

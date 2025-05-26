@@ -2,7 +2,7 @@ using MonitoringService.Repositories;
 using MonitoringService.Repositories.Abstracts;
 using MonitoringService.Services.Absrtacts;
 using MonitoringService.Services;
-using MonitoringService.Models.logs;
+using MonitoringService.Models.loging;
 
 namespace MonitoringService;
 

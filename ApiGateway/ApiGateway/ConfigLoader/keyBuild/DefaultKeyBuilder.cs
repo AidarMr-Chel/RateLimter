@@ -1,5 +1,8 @@
 ﻿using ApiGateway.ConfigLoader.extractFilterValues;
 using ApiGateway.ConfigLoader.models;
+using ApiGateway.Logging.models;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace ApiGateway.ConfigLoader.keyBuild;
 
@@ -32,5 +35,32 @@ public class DefaultKeyBuilder : IKeyBuilder
         }
 
         return "rate-limit:" + string.Join(":", parts);
+    }
+
+    public string BuildRuleId(RateLimitRule rule, HttpContext context)
+    {
+        var raw = BuildKey(rule, context);
+        using var sha = SHA256.Create();
+        var bytes = sha.ComputeHash(Encoding.UTF8.GetBytes(raw));
+        return Convert.ToHexString(bytes);
+    }
+
+    public RuleDetails BuildRuleDetails(RateLimitRule rule, HttpContext context)
+    {
+        var details = new RuleDetails
+        {
+            Strategy = rule.StrategyName,
+            Limit = rule.Limit,
+            Period = rule.Period
+        };
+
+        foreach (var kvp in rule.Filters)
+        {
+            var val = _extractor.Extract(kvp.Key, context);
+            if (!string.IsNullOrWhiteSpace(val))
+                details.Filters[kvp.Key] = val;
+        }
+
+        return details;
     }
 }

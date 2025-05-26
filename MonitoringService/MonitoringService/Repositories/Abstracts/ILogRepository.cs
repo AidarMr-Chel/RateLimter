@@ -1,4 +1,5 @@
 ﻿using MonitoringService.Models;
+using MonitoringService.Models.loging;
 
 
 namespace MonitoringService.Repositories.Abstracts

@@ -1,6 +1,7 @@
 ﻿using ApiGateway.ConfigLoader;
 using ApiGateway.ConfigLoader.keyBuild;
 using ApiGateway.Logging;
+using ApiGateway.Logging.abstracts;
 using ApiGateway.RateLimiting.core;
 
 namespace ApiGateway.Middleware;
@@ -11,14 +12,14 @@ public class RateLimitingMiddleware
     private readonly IRateLimitingStrategySelector _strategies;
     private readonly IRateLimitConfigProvider _providerConfig;
     private readonly IKeyBuilder _keyBuilder;
-    private readonly ILogService _logService;
+    private readonly IMasterLogService _logService;
 
     public RateLimitingMiddleware(
         RequestDelegate next, 
         IRateLimitingStrategySelector strategies, 
         IRateLimitConfigProvider providerConfig,
         IKeyBuilder keyBuilder,
-        ILogService logService)
+        IMasterLogService logService)
     {
         _next = next;
         _strategies = strategies;
@@ -46,19 +47,17 @@ public class RateLimitingMiddleware
         if (!allowed) 
         { 
             context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+            var ruleId = _keyBuilder.BuildRuleId(rule, context);
+            var ruleDetails = _keyBuilder.BuildRuleDetails(rule, context);
+            await _logService.LogAsync(
+                context,
+                StatusCodes.Status429TooManyRequests,
+                "RateLimitExceeded",
+                ruleId,
+                ruleDetails
+            );
 
-            await _logService.LogAsync(new RateLimitLogEntry
-            {
-                Timestamp = DateTime.UtcNow,
-                Ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-                Region = context.Request.Headers["X-Region"].ToString(),
-                Path = context.Request.Path,
-                StatusCode = 429,
-                Reason = "RateLimitExceeded",
-                UserAgent = context.Request.Headers["User-Agent"].ToString()
-            });
-
-            await context.Response.WriteAsync("Too Many Requests (rate limit exceeded)");
+            context.Items["RateLimitExceeded"] = true;
             return;
         }
 

@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using MonitoringService.Models;
+using MonitoringService.Models.loging;
 using MonitoringService.Services.Absrtacts;
 
 namespace MonitoringService.Controllers;

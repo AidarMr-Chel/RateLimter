@@ -1,4 +1,4 @@
-﻿using MonitoringService.Models;
+﻿using MonitoringService.Models.loging;
 
 namespace MonitoringService.Services.Absrtacts
 {

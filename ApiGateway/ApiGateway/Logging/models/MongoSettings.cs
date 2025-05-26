@@ -1,4 +1,4 @@
-﻿namespace MonitoringService.Models.loging;
+﻿namespace ApiGateway.Logging.models;
 
 public class MongoSettings
 {

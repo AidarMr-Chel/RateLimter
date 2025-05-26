@@ -2,7 +2,7 @@
 using MongoDB.Bson;
 using MongoDB.Driver;
 using MonitoringService.Models;
-using MonitoringService.Models.logs;
+using MonitoringService.Models.loging;
 using MonitoringService.Repositories.Abstracts;
 
 namespace MonitoringService.Repositories;
