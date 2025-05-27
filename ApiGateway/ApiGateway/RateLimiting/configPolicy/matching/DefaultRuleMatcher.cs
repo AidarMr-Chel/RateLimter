@@ -19,13 +19,20 @@ public class DefaultRuleMatcher : IRateLimitRuleMatcher
 
     public async Task<(RateLimitRuleDto, FilterDto)?> FindMatchingRule(HttpContext context)
     {
-        var filters = (await _store.GetAllFiltersAsync()).ToDictionary(f => f.Id);
+        var filtersList = await _store.GetAllFiltersAsync();
         var rules = await _store.GetAllRulesAsync();
+
+        var filters = filtersList
+            .ToDictionary(f => NormalizeKey(f.Id), StringComparer.OrdinalIgnoreCase);
 
         foreach (var rule in rules.OrderByDescending(r => r.Limit))
         {
-            if (!filters.TryGetValue(rule.FilterId, out var filter))
+            var fid = NormalizeKey(rule.FilterId);
+
+            if (!filters.TryGetValue(fid, out var filter))
                 continue;
+
+            CleanFilter(filter);
 
             if (IsMatch(filter, context))
                 return (rule, filter);
@@ -39,7 +46,7 @@ public class DefaultRuleMatcher : IRateLimitRuleMatcher
         return Match("ip", filter.Ip)
             && Match("region", filter.Region)
             && Match("country", filter.Country)
-            && Match("user-agent", filter.UserAgent)
+            && Match("useragent", filter.UserAgent)
             && Match("httpmethod", filter.HttpMethod)
             && Match("path", filter.Path)
             && Match("apikey", filter.ApiKey)
@@ -49,9 +56,35 @@ public class DefaultRuleMatcher : IRateLimitRuleMatcher
 
         bool Match(string key, List<string>? expected)
         {
-            if (expected == null || expected.Count == 0) return true;
+            if (expected == null || expected.Count == 0)
+                return true;
+
             var actual = _extractor.Extract(key, context);
             return actual != null && expected.Contains(actual, StringComparer.OrdinalIgnoreCase);
         }
+    }
+
+    private void CleanFilter(FilterDto filter)
+    {
+        filter.Ip = Clean(filter.Ip);
+        filter.Region = Clean(filter.Region);
+        filter.Country = Clean(filter.Country);
+        filter.UserAgent = Clean(filter.UserAgent);
+        filter.HttpMethod = Clean(filter.HttpMethod);
+        filter.Path = Clean(filter.Path);
+        filter.ApiKey = Clean(filter.ApiKey);
+        filter.ClientId = Clean(filter.ClientId);
+        filter.UserId = Clean(filter.UserId);
+        filter.DeviceType = Clean(filter.DeviceType);
+    }
+
+    private List<string>? Clean(List<string>? input)
+    {
+        return input?.Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
+    }
+
+    private static string NormalizeKey(string key)
+    {
+        return key?.Trim().ToLowerInvariant().Replace("\u200B", "") ?? "";
     }
 }

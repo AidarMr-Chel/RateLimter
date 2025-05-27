@@ -1,9 +1,9 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Bson;
 
-namespace MonitoringService.Models.loging;
+namespace MonitoringService.Models.loging.modelsDto;
 
-public class LogEntry
+public class LogEntryDto
 {
     [BsonId]
     [BsonRepresentation(BsonType.ObjectId)]

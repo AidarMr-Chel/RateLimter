@@ -1,6 +1,6 @@
-﻿namespace MonitoringService.Models.loging
+﻿namespace MonitoringService.Models.loging.modelsDto
 {
-    public class LogFilter
+    public class LogFilterDto
     {
         public string? Region { get; set; }
         public string? Ip { get; set; }

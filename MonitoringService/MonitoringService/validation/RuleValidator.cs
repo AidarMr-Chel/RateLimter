@@ -3,9 +3,9 @@ using ApiGateway.RateLimiting.configPolicy.modelsDto;
 
 namespace ApiGateway.RateLimiting.configPolicy.validation;
 
-public class RateLimitRuleValidator : AbstractValidator<RateLimitRuleDto>
+public class RuleValidator : AbstractValidator<RateLimitRuleDto>
 {
-    public RateLimitRuleValidator()
+    public RuleValidator()
     {
         RuleFor(r => r.Id)
             .NotEmpty().WithMessage("Rule Id is required");

@@ -1,5 +1,5 @@
 ﻿using MonitoringService.Models;
-using MonitoringService.Models.loging;
+using MonitoringService.Models.loging.modelsDto;
 using MonitoringService.Repositories;
 using MonitoringService.Repositories.Abstracts;
 using MonitoringService.Services.Absrtacts;
@@ -15,17 +15,17 @@ public class LogService : ILogService
         _repository = repository;
     }
 
-    public Task<List<LogEntry>> GetLatestLogsAsync(int take)
+    public Task<List<LogEntryDto>> GetLatestLogsAsync(int take)
     {
         return _repository.GetLatestLogsAsync(take);
     }
 
-    public Task<LogEntry?> GetByIdAsync(string id)
+    public Task<LogEntryDto?> GetByIdAsync(string id)
     {
         return _repository.GetByIdAsync(id)!;
     }
 
-    public Task<List<LogEntry>> GetFilteredLogsAsync(LogFilter filter)
+    public Task<List<LogEntryDto>> GetFilteredLogsAsync(LogFilterDto filter)
     {
         return _repository.GetFilteredLogsAsync(filter);
     }

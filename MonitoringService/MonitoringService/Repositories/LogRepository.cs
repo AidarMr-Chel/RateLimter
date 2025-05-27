@@ -3,23 +3,24 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 using MonitoringService.Models;
 using MonitoringService.Models.loging;
+using MonitoringService.Models.loging.modelsDto;
 using MonitoringService.Repositories.Abstracts;
 
 namespace MonitoringService.Repositories;
 
 public class LogRepository : ILogRepository
 {
-    private readonly IMongoCollection<LogEntry> _logs;
+    private readonly IMongoCollection<LogEntryDto> _logs;
 
     public LogRepository(IOptions<MongoSettings> options)
     {
         var setting = options.Value;
         var client = new MongoClient(setting.ConnectionString);
         var db = client.GetDatabase(setting.Database);
-        _logs = db.GetCollection<LogEntry>(setting.Collection);
+        _logs = db.GetCollection<LogEntryDto>(setting.Collection);
     }
 
-    public async Task<List<LogEntry>> GetLatestLogsAsync(int take)
+    public async Task<List<LogEntryDto>> GetLatestLogsAsync(int take)
     {
         return await _logs.Find(_ => true)
             .SortByDescending(x => x.Timestamp)
@@ -27,12 +28,12 @@ public class LogRepository : ILogRepository
             .ToListAsync();
     }
 
-    public async Task<LogEntry> GetByIdAsync(string id)
+    public async Task<LogEntryDto> GetByIdAsync(string id)
     {
         return await _logs.Find(x => x.Id == id).FirstOrDefaultAsync();
     }
 
-    public async Task<List<LogEntry>> GetFilteredLogsAsync(LogFilter filter)
+    public async Task<List<LogEntryDto>> GetFilteredLogsAsync(LogFilterDto filter)
     {
         var mongoFilter = BuildFilter(filter);
 
@@ -43,10 +44,10 @@ public class LogRepository : ILogRepository
     }
 
 
-    private FilterDefinition<LogEntry> BuildFilter(LogFilter filter)
+    private FilterDefinition<LogEntryDto> BuildFilter(LogFilterDto filter)
     {
-        var builder = Builders<LogEntry>.Filter;
-        var filters = new List<FilterDefinition<LogEntry>>();
+        var builder = Builders<LogEntryDto>.Filter;
+        var filters = new List<FilterDefinition<LogEntryDto>>();
 
         if (!string.IsNullOrEmpty(filter.Region))
             filters.Add(builder.Eq(x => x.Region, filter.Region));

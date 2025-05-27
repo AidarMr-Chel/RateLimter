@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using MonitoringService.Models;
-using MonitoringService.Models.loging;
+using MonitoringService.Models.loging.modelsDto;
 using MonitoringService.Services.Absrtacts;
 
 namespace MonitoringService.Controllers;
@@ -32,7 +32,7 @@ public class LogsController : ControllerBase
     }
 
     [HttpGet("filter")]
-    public async Task<IActionResult> Filter([FromQuery] LogFilter filter)
+    public async Task<IActionResult> Filter([FromQuery] LogFilterDto filter)
     {
         var logs = await _service.GetFilteredLogsAsync(filter);
         return Ok(logs);
