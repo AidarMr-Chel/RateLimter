@@ -1,37 +1,40 @@
-﻿using ApiGateway.ConfigLoader;
-using ApiGateway.ConfigLoader.keyBuild;
-using ApiGateway.Logging;
-using ApiGateway.Logging.abstracts;
+﻿using ApiGateway.Logging.abstracts;
+using ApiGateway.RateLimiting.configPolicy.abstracts;
 using ApiGateway.RateLimiting.core;
+using ApiGateway.RateLimiting.keyBuild;
 
 namespace ApiGateway.Middleware;
 
 public class RateLimitingMiddleware
 {
-    private readonly RequestDelegate _next;
     private readonly IRateLimitingStrategySelector _strategies;
-    private readonly IRateLimitConfigProvider _providerConfig;
+    private readonly IRateLimitRuleMatcher _ruleMatcher;
     private readonly IKeyBuilder _keyBuilder;
     private readonly IMasterLogService _logService;
 
     public RateLimitingMiddleware(
-        RequestDelegate next, 
-        IRateLimitingStrategySelector strategies, 
-        IRateLimitConfigProvider providerConfig,
+        IRateLimitingStrategySelector strategies,
+        IRateLimitRuleMatcher ruleMatcher,
         IKeyBuilder keyBuilder,
         IMasterLogService logService)
     {
-        _next = next;
         _strategies = strategies;
-        _providerConfig = providerConfig;
+        _ruleMatcher = ruleMatcher;
         _keyBuilder = keyBuilder;
         _logService = logService;
     }
 
-    public async Task InvokeAsync(HttpContext context)
+    public async Task InvokeAsync(HttpContext context, RequestDelegate next)
     {
-        var rule = await _providerConfig.GetRule(context);
-        var key = _keyBuilder.BuildKey(rule, context);
+        var policy = await _ruleMatcher.FindMatchingRule(context);
+
+        if (policy is not (var rule, var filter))
+        {
+            await next(context);
+            return;
+        }
+
+        var key = _keyBuilder.BuildKey(rule, filter, context);
 
         var rateLimitContext = new RateLimitRequestContext
         {
@@ -47,8 +50,8 @@ public class RateLimitingMiddleware
         if (!allowed) 
         { 
             context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
-            var ruleId = _keyBuilder.BuildRuleId(rule, context);
-            var ruleDetails = _keyBuilder.BuildRuleDetails(rule, context);
+            var ruleId = _keyBuilder.BuildRuleId(rule, filter, context);
+            var ruleDetails = _keyBuilder.BuildRuleDetails(rule, filter, context);
             await _logService.LogAsync(
                 context,
                 StatusCodes.Status429TooManyRequests,
@@ -61,6 +64,6 @@ public class RateLimitingMiddleware
             return;
         }
 
-        await _next(context);
+        await next(context);
     }
 }

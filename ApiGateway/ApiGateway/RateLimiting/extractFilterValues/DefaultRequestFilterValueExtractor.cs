@@ -1,9 +1,8 @@
-﻿
-namespace ApiGateway.ConfigLoader.extractFilterValues;
+﻿namespace ApiGateway.RateLimiting.extractFilterValues;
 
 public class DefaultRequestFilterValueExtractor : IRequestFilterValueExtractor
 {
-    
+
     public string? Extract(string key, HttpContext context)
     {
         return key.ToLowerInvariant() switch

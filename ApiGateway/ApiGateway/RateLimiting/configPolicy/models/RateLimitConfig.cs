@@ -1,4 +1,4 @@
-﻿namespace ApiGateway.ConfigLoader.models;
+﻿namespace ApiGateway.RateLimiting.configPolicy.models;
 
 public class RateLimitConfig
 {

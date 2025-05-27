@@ -1,4 +1,4 @@
-﻿namespace ApiGateway.ConfigLoader.extractFilterValues;
+﻿namespace ApiGateway.RateLimiting.extractFilterValues;
 
 public interface IRequestFilterValueExtractor
 {

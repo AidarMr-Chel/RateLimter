@@ -1,14 +1,9 @@
 using ApiGateway.Middleware;
 using ApiGateway.RateLimiting.strategies;
 using ApiGateway.Redis;
-using Serilog;
-using ApiGateway.ConfigLoader;
 using ApiGateway.RateLimiting.core;
 using ApiGateway.RateLimiting.Selector;
-using ApiGateway.ConfigLoader.extractFilterValues;
-using ApiGateway.ConfigLoader.keyBuild;
 using StackExchange.Redis;
-using ApiGateway.ConfigLoader.providers.redis;
 using ApiGateway.Proxying;
 using ApiGateway.Logging.models;
 using ApiGateway.Logging.abstracts;
@@ -18,6 +13,11 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using ApiGateway.Proxying.policies;
+using ApiGateway.RateLimiting.keyBuild;
+using ApiGateway.RateLimiting.extractFilterValues;
+using ApiGateway.RateLimiting.configPolicy.abstracts;
+using ApiGateway.RateLimiting.configPolicy.matching;
+using ApiGateway.RateLimiting.configPolicy.storage;
 
 
 namespace ApiGateway;
@@ -54,27 +54,23 @@ public class Program
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.Secret))
                 };
             });
-            
-            
-            services.AddSingleton<IRequestFilterValueExtractor, DefaultRequestFilterValueExtractor>();
-            services.AddSingleton<IRateLimitingStrategy, FixedWindowStrategy>();
-            services.AddSingleton<IRateLimitingStrategySelector, RateLimitingStrategySelector>();
-            services.AddSingleton<IKeyBuilder, DefaultKeyBuilder>();
-        
+
+            services.AddScoped<RateLimitingMiddleware>();
+            services.AddScoped<IRequestFilterValueExtractor, DefaultRequestFilterValueExtractor>();
+            services.AddScoped<IKeyBuilder, DefaultKeyBuilder>();
+            services.AddScoped<IRateLimitingStrategy, FixedWindowStrategy>();
+            services.AddScoped<IRateLimitingStrategySelector, RateLimitingStrategySelector>();
+
             services.AddSingleton<IConnectionMultiplexer>(sp =>
-            {
-                return ConnectionMultiplexer.Connect("localhost:6380"); 
-            });
+                {
+                    return ConnectionMultiplexer.Connect("localhost:6380"); 
+                });
         
             services.AddSingleton<IRateLimitStore, RedisRateLimitStore>();
-            services.AddSingleton<IRateLimitConfigProvider>(sp =>
-            {
-                var extractor = sp.GetRequiredService<IRequestFilterValueExtractor>();
-                var redis = sp.GetRequiredService<IConnectionMultiplexer>();
-                return new RedisRateLimitConfigProvider(redis, extractor);
-            });  
-        
-            services.AddSingleton<ILogWriter, MongoLogWriter>();
+            services.AddScoped<IRateLimitConfigStore, RedisRateLimitConfigStore>();
+            services.AddScoped<IRateLimitRuleMatcher, DefaultRuleMatcher>();
+
+        services.AddSingleton<ILogWriter, MongoLogWriter>();
             services.AddSingleton<IMasterLogService, MasterLogService>();
 
             services.AddHttpContextAccessor();
@@ -101,7 +97,14 @@ public class Program
             }
 
             app.UseMiddleware<JwtAuthMiddleware>();
-            app.UseMiddleware<RateLimitingMiddleware>();
+            app.Use((RequestDelegate next) =>
+            {
+                return async context =>
+                {
+                    var middleware = context.RequestServices.GetRequiredService<RateLimitingMiddleware>();
+                    await middleware.InvokeAsync(context, next);
+                };
+            });
             app.UseAuthorization();
             app.MapControllers();
             app.UseMiddleware<ExceptionMiddleware>();
