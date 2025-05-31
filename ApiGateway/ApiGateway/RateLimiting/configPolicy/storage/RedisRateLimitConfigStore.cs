@@ -1,5 +1,4 @@
-﻿
-using ApiGateway.RateLimiting.configPolicy.abstracts;
+﻿using ApiGateway.RateLimiting.configPolicy.abstracts;
 using ApiGateway.RateLimiting.configPolicy.modelsDto;
 using StackExchange.Redis;
 using System.Text.Json;
@@ -12,8 +11,8 @@ public class RedisRateLimitConfigStore : IRateLimitConfigStore
 
     private const string FiltersSetKey = "ratelimit:filters";
     private const string RulesSetKey = "ratelimit:rules";
-    private const string FilterKeyPrefix = "ratelimit:filter:";
-    private const string RuleKeyPrefix = "ratelimit:rule:";
+    private const string FilterKey = "ratelimit:filter:";
+    private const string RuleKey = "ratelimit:rule:";
 
     private static readonly JsonSerializerOptions _jsonOptions = new()
     {
@@ -33,7 +32,7 @@ public class RedisRateLimitConfigStore : IRateLimitConfigStore
 
         foreach (var id in ids.Select(i => (string)i))
         {
-            var json = await _db.StringGetAsync(FilterKeyPrefix + id);
+            var json = await _db.StringGetAsync(FilterKey + id);
             if (!json.IsNullOrEmpty)
             {
                 var filter = JsonSerializer.Deserialize<FilterDto>(json!, _jsonOptions);
@@ -52,7 +51,7 @@ public class RedisRateLimitConfigStore : IRateLimitConfigStore
 
         foreach (var id in ids.Select(i => (string)i))
         {
-            var json = await _db.StringGetAsync(RuleKeyPrefix + id);
+            var json = await _db.StringGetAsync(RuleKey + id);
             if (!json.IsNullOrEmpty)
             {
                 var rule = JsonSerializer.Deserialize<RateLimitRuleDto>(json!, _jsonOptions);
@@ -61,7 +60,7 @@ public class RedisRateLimitConfigStore : IRateLimitConfigStore
             }
         }
 
+        
         return result;
     }
-
 }

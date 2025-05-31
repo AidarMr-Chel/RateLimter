@@ -1,7 +1,6 @@
 using ApiGateway.Middleware;
 using ApiGateway.RateLimiting.strategies;
 using ApiGateway.Redis;
-using ApiGateway.RateLimiting.core;
 using ApiGateway.RateLimiting.Selector;
 using StackExchange.Redis;
 using ApiGateway.Proxying;
@@ -18,6 +17,7 @@ using ApiGateway.RateLimiting.extractFilterValues;
 using ApiGateway.RateLimiting.configPolicy.abstracts;
 using ApiGateway.RateLimiting.configPolicy.matching;
 using ApiGateway.RateLimiting.configPolicy.storage;
+using ApiGateway.RateLimiting.core.abstracts;
 
 
 namespace ApiGateway;
@@ -37,6 +37,7 @@ public class Program
             services.Configure<JwtOptions>(config.GetSection("Jwt"));
             services.Configure<ProxyLogOptions>(config.GetSection("ProxyLog"));
             services.Configure<MongoSettings>(config.GetSection("Mongo"));
+            services.Configure<BackendPathOptions>(config.GetSection("BackendPath"));
 
             services.AddSingleton<TokenValidationParameters>(sp =>
             {
@@ -70,14 +71,14 @@ public class Program
             services.AddScoped<IRateLimitConfigStore, RedisRateLimitConfigStore>();
             services.AddScoped<IRateLimitRuleMatcher, DefaultRuleMatcher>();
 
-        services.AddSingleton<ILogWriter, MongoLogWriter>();
+            services.AddSingleton<ILogWriter, MongoLogWriter>();
             services.AddSingleton<IMasterLogService, MasterLogService>();
 
             services.AddHttpContextAccessor();
             services.AddSingleton<PolicyFactory>();
             services.AddHttpClient("UserApiClient", client =>
             {
-                client.BaseAddress = new Uri("http://localhost:5276");
+                client.BaseAddress = new Uri(config.GetSection("BackendPath").GetValue<string>("Path"));
             })
             .AddPolicyHandler((sp, req) =>
             {

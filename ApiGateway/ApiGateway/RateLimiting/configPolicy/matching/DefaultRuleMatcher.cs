@@ -43,16 +43,20 @@ public class DefaultRuleMatcher : IRateLimitRuleMatcher
 
     private bool IsMatch(FilterDto filter, HttpContext context)
     {
-        return Match("ip", filter.Ip)
-            && Match("region", filter.Region)
-            && Match("country", filter.Country)
-            && Match("useragent", filter.UserAgent)
-            && Match("httpmethod", filter.HttpMethod)
-            && Match("path", filter.Path)
-            && Match("apikey", filter.ApiKey)
-            && Match("clientid", filter.ClientId)
-            && Match("userid", filter.UserId)
-            && Match("devicetype", filter.DeviceType);
+        var filterProps = typeof(FilterDto)
+        .GetProperties()
+        .Where(p => p.PropertyType == typeof(List<string>));
+
+        foreach (var prop in filterProps)
+        {
+            var key = prop.Name.ToLowerInvariant(); 
+            var expected = prop.GetValue(filter) as List<string>;
+
+            if (!Match(key, expected))
+                return false;
+        }
+
+        return true;
 
         bool Match(string key, List<string>? expected)
         {
@@ -66,17 +70,17 @@ public class DefaultRuleMatcher : IRateLimitRuleMatcher
 
     private void CleanFilter(FilterDto filter)
     {
-        filter.Ip = Clean(filter.Ip);
-        filter.Region = Clean(filter.Region);
-        filter.Country = Clean(filter.Country);
-        filter.UserAgent = Clean(filter.UserAgent);
-        filter.HttpMethod = Clean(filter.HttpMethod);
-        filter.Path = Clean(filter.Path);
-        filter.ApiKey = Clean(filter.ApiKey);
-        filter.ClientId = Clean(filter.ClientId);
-        filter.UserId = Clean(filter.UserId);
-        filter.DeviceType = Clean(filter.DeviceType);
+        var props = typeof(FilterDto)
+            .GetProperties()
+            .Where(p => p.PropertyType == typeof(List<string>));
+
+        foreach (var prop in props)
+        {
+            var value = prop.GetValue(filter) as List<string>;
+            prop.SetValue(filter, Clean(value));
+        }
     }
+
 
     private List<string>? Clean(List<string>? input)
     {

@@ -1,6 +1,7 @@
 ﻿using ApiGateway.Logging.abstracts;
 using ApiGateway.RateLimiting.configPolicy.abstracts;
 using ApiGateway.RateLimiting.core;
+using ApiGateway.RateLimiting.core.abstracts;
 using ApiGateway.RateLimiting.keyBuild;
 
 namespace ApiGateway.Middleware;
@@ -34,7 +35,7 @@ public class RateLimitingMiddleware
             return;
         }
 
-        var key = _keyBuilder.BuildKey(rule, filter, context);
+        var key = _keyBuilder.BuildKey(filter);
 
         var rateLimitContext = new RateLimitRequestContext
         {
@@ -50,13 +51,14 @@ public class RateLimitingMiddleware
         if (!allowed) 
         { 
             context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
-            var ruleId = _keyBuilder.BuildRuleId(rule, filter, context);
-            var ruleDetails = _keyBuilder.BuildRuleDetails(rule, filter, context);
+            var redisKey = _keyBuilder.BuildRedisHash(filter);
+            var ruleDetails = _keyBuilder.BuildRuleDetails(rule, filter);
+            ruleDetails.RuleId = rule.Id;
             await _logService.LogAsync(
                 context,
                 StatusCodes.Status429TooManyRequests,
                 "RateLimitExceeded",
-                ruleId,
+                redisKey,
                 ruleDetails
             );
 

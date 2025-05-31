@@ -4,6 +4,6 @@ namespace ApiGateway.Logging.abstracts;
 
 public interface IMasterLogService
 {
-    Task LogAsync(HttpContext context, int statusCode, string reason, string? ruleId = null, RuleDetails? rule = null, int? durationMs = null);
+    Task LogAsync(HttpContext context, int statusCode, string reason, string? redisHash = null, RuleDetails? rule = null, int? durationMs = null);
 }
 

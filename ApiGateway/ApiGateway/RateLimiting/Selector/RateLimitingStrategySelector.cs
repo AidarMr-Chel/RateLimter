@@ -1,4 +1,4 @@
-﻿using ApiGateway.RateLimiting.core;
+﻿using ApiGateway.RateLimiting.core.abstracts;
 
 namespace ApiGateway.RateLimiting.Selector;
 

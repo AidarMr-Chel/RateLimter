@@ -1,5 +1,6 @@
 ﻿
 using ApiGateway.RateLimiting.core;
+using ApiGateway.RateLimiting.core.abstracts;
 using ApiGateway.Redis;
 
 namespace ApiGateway.RateLimiting.strategies;
@@ -17,7 +18,6 @@ public class FixedWindowStrategy : IRateLimitingStrategy
     public async Task<bool> IsRequestAllowedAsync(RateLimitRequestContext context)
     {
         var key = context.Key;
-        Console.WriteLine($"{key} {context.Period.TotalSeconds}");
         var count = await _store.IncrementAsync(key);
 
         if (count == 1)
@@ -25,7 +25,6 @@ public class FixedWindowStrategy : IRateLimitingStrategy
             await _store.SetExpireAsync(key, context.Period);
         }
 
-        Console.WriteLine(count);
         return count <= context.Limit;
     }
 

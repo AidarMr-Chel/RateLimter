@@ -10,15 +10,18 @@ public class ProxyService : IProxyService
     private readonly IHttpClientFactory _factory;
     private readonly IMasterLogService _logService;
     private readonly IOptions<ProxyLogOptions> _options;
+    private readonly IOptions<BackendPathOptions> _optionsPath;
 
     public ProxyService(
         IHttpClientFactory factory, 
         IMasterLogService logService, 
-        IOptions<ProxyLogOptions> options)
+        IOptions<ProxyLogOptions> options,
+        IOptions<BackendPathOptions> optionsPath)
     {
         _factory = factory;
         _logService = logService;
         _options = options;
+        _optionsPath = optionsPath;
     }
 
     public async Task<HttpResponseMessage> ForwardAsync(HttpContext context)
@@ -30,11 +33,12 @@ public class ProxyService : IProxyService
 
         var client = _factory.CreateClient("UserApiClient");
         var targetPath = context.Request.Path.Value?.Replace("/proxy", "") ?? "";
+        var settingPath = _optionsPath.Value.Path;
 
         var request = new HttpRequestMessage
         {
             Method = new HttpMethod(context.Request.Method),
-            RequestUri = new Uri("http://localhost:5276" + targetPath + context.Request.QueryString)
+            RequestUri = new Uri(settingPath + targetPath + context.Request.QueryString)
         };
 
         if (context.Request.ContentLength > 0)

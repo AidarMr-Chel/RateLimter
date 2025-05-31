@@ -1,4 +1,4 @@
-﻿namespace ApiGateway.RateLimiting.core;
+﻿namespace ApiGateway.RateLimiting.core.abstracts;
 
 public interface IRateLimitingStrategy
 {

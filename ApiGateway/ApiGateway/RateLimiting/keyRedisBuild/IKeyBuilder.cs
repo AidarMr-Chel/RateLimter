@@ -6,8 +6,8 @@ namespace ApiGateway.RateLimiting.keyBuild;
 
 public interface IKeyBuilder
 {
-    string BuildKey(RateLimitRuleDto rule, FilterDto filter, HttpContext context);
-    string BuildRuleId(RateLimitRuleDto rule, FilterDto filter, HttpContext context);
-    RuleDetails BuildRuleDetails(RateLimitRuleDto rule, FilterDto filter, HttpContext context);
+    string BuildKey(FilterDto filter);
+    string BuildRedisHash(FilterDto filter);
+    RuleDetails BuildRuleDetails(RateLimitRuleDto rule, FilterDto filter);
 }
 
