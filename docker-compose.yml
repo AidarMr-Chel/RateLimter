@@ -29,5 +29,50 @@ services:
       ME_CONFIG_BASICAUTH_USERNAME: admin
       ME_CONFIG_BASICAUTH_PASSWORD: admin
 
+  gateway1:
+    build:
+      context: ./ApiGateway
+    container_name: gateway1
+    ports:
+      - "5171:80"
+    environment:
+      - Gateway__InstanceId=gateway-1
+    depends_on:
+      - redis
+      - mongo
+
+  gateway2:
+    build:
+      context: ./ApiGateway
+    container_name: gateway2
+    ports:
+      - "5172:80"
+    environment:
+      - Gateway__InstanceId=gateway-2
+    depends_on:
+      - redis
+      - mongo
+
+  gateway3:
+    build:
+      context: ./ApiGateway
+    container_name: gateway3
+    ports:
+      - "5173:80"
+    environment:
+      - Gateway__InstanceId=gateway-3
+    depends_on:
+      - redis
+      - mongo
+
+  monitoring:
+    build:
+      context: ./MonitoringService
+    container_name: monitoring
+    ports:
+      - "5080:80"
+    depends_on:
+      - mongo
+
 volumes:
   mongo-data:

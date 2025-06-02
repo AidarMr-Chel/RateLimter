@@ -60,6 +60,7 @@ public class Program
             services.AddScoped<IRequestFilterValueExtractor, DefaultRequestFilterValueExtractor>();
             services.AddScoped<IKeyBuilder, DefaultKeyBuilder>();
             services.AddScoped<IRateLimitingStrategy, FixedWindowStrategy>();
+            services.AddScoped<IRateLimitingStrategy, SlidingWindowStrategy>();
             services.AddScoped<IRateLimitingStrategySelector, RateLimitingStrategySelector>();
 
             services.AddSingleton<IConnectionMultiplexer>(sp =>

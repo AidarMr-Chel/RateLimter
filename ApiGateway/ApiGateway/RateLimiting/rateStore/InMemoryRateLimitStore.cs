@@ -1,7 +1,6 @@
-﻿
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 
-namespace ApiGateway.Redis;
+namespace ApiGateway.RateLimiting.rateStore;
 
 public class InMemoryRateLimitStore : IRateLimitStore
 {
@@ -19,10 +18,10 @@ public class InMemoryRateLimitStore : IRateLimitStore
         item.Count++;
         return Task.FromResult(item.Count);
     }
-    
+
     public Task<int> GetCountAsync(string key)
     {
-        if(_store.TryGetValue(key, out var item))
+        if (_store.TryGetValue(key, out var item))
             return Task.FromResult(item.Count);
         return Task.FromResult(0);
     }
@@ -33,14 +32,14 @@ public class InMemoryRateLimitStore : IRateLimitStore
         item.Count = count;
         return Task.CompletedTask;
     }
-    
+
     public Task<DateTime?> GetExpireAsync(string key)
     {
-        if (_store.TryGetValue(key,out var item))
+        if (_store.TryGetValue(key, out var item))
             return Task.FromResult(item.Expiry);
         return Task.FromResult<DateTime?>(null);
     }
-    
+
     public Task SetExpireAsync(string key, TimeSpan ttl)
     {
         var item = _store.GetOrAdd(key, _ => new StoreItem());

@@ -6,10 +6,12 @@ namespace ApiGateway.Logging.services;
 public class MasterLogService : IMasterLogService
 {
     private readonly ILogWriter _writer;
+    private readonly string _instanceId;
 
-    public MasterLogService(ILogWriter writer)
+    public MasterLogService(ILogWriter writer, IConfiguration config)
     {
         _writer = writer;
+        _instanceId = config["Gateway:InstanceId"] ?? "unknown";
     }
 
     public async Task LogAsync(HttpContext context, int statusCode, string reason, string? ruleId = null, RuleDetails? rule = null, int? durationMs = null)
@@ -26,7 +28,9 @@ public class MasterLogService : IMasterLogService
             RuleId = ruleId,
             Rule = rule,
             DurationMs = durationMs,
-            Headers = context.Request.Headers.ToDictionary(h => h.Key, h => h.Value.ToString())
+            Headers = context.Request.Headers.ToDictionary(h => h.Key, h => h.Value.ToString()),
+            InstanceId = _instanceId
+            
         };
 
         await _writer.WriteAsync(log);

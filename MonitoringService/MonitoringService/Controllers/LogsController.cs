@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using MonitoringService.Models;
 using MonitoringService.Models.loging.modelsDto;
 using MonitoringService.Services.Absrtacts;
 

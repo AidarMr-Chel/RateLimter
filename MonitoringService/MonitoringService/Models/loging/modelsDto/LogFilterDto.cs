@@ -11,6 +11,18 @@
         public DateTime? From { get; set; }
         public DateTime? To { get; set; }
 
-        public int Take { get; set; } = 100;
+        public string? InstanceId { get; set; }
+        public string? Path { get; set; }
+        public string? Method { get; set; }
+
+        public int Skip { get; set; } = 0;
+
+        private int _take = 100;
+        public int Take
+        {
+            get => Math.Clamp(_take, 1, 1000);
+            set => _take = value;
+        }
     }
+
 }

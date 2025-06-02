@@ -16,7 +16,7 @@ public class PolicyFactory
     }
 
     public IAsyncPolicy<HttpResponseMessage> CreatePolicy()
-        => Policy.WrapAsync(GetCircuitBreakerPolicy(), GetRetryPolicy());
+        => Policy.WrapAsync(GetRetryPolicy(), GetCircuitBreakerPolicy());
 
     private IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()
         => HttpPolicyExtensions
@@ -36,7 +36,7 @@ public class PolicyFactory
     private IAsyncPolicy<HttpResponseMessage> GetCircuitBreakerPolicy()
         => Policy<HttpResponseMessage>
             .Handle<HttpRequestException>()
-            .OrResult(resp => (int)resp.StatusCode == 429 || (int)resp.StatusCode >= 500)
+            .OrResult(resp => (int)resp.StatusCode >= 500)
             .CircuitBreakerAsync(
                 handledEventsAllowedBeforeBreaking: 3,
                 durationOfBreak: TimeSpan.FromSeconds(30),

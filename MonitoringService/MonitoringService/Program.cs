@@ -13,22 +13,27 @@ public class Program
     public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
-
-        builder.Services.AddControllers();
-        builder.Services.AddEndpointsApiExplorer();
-        builder.Services.AddSwaggerGen();
-        builder.Services.AddScoped<ILogService, LogService>();
-        builder.Services.AddScoped<ILogRepository, LogRepository>();
-        builder.Services.Configure<MongoSettings>(builder.Configuration.GetSection("Mongo"));
-
-        builder.Services.AddScoped<IPolicyRepository, PolicyRepository>();
-        builder.Services.AddScoped<IPolicyService, PolicyService>();
-
-        builder.Services.AddScoped<FilterValidator>();
-        builder.Services.AddScoped<RuleValidator>();
+        var config = builder.Configuration;
+        var services = builder.Services;
 
 
-        builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+        services.AddControllers();
+        services.AddEndpointsApiExplorer();
+        services.AddSwaggerGen();
+        services.AddScoped<ILogService, LogService>();
+        services.AddScoped<ILogRepository, LogRepository>();
+        services.Configure<MongoSettings>(config.GetSection("Mongo"));
+
+        services.AddScoped<IPolicyRepository, PolicyRepository>();
+        services.AddScoped<IPolicyService, PolicyService>();
+
+        services.AddScoped<FilterValidator>();
+        services.AddScoped<RuleValidator>();
+        services.AddScoped<IMetricService, MetricsService>();
+
+
+
+        services.AddSingleton<IConnectionMultiplexer>(sp =>
         {
             return ConnectionMultiplexer.Connect("localhost:6380");
         });

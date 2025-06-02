@@ -25,6 +25,7 @@ public class LogEntry
     public int? DurationMs { get; set; }
 
     public Dictionary<string, string>? Headers { get; set; }
+    public string InstanceId { get; set; }
 }
 
 
