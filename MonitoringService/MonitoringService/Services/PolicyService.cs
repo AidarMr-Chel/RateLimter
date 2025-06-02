@@ -1,5 +1,6 @@
 ﻿using ApiGateway.RateLimiting.configPolicy.modelsDto;
 using ApiGateway.RateLimiting.configPolicy.validation;
+using MonitoringService.Models.policy.modelsDto;
 using MonitoringService.Repositories.Abstracts;
 using MonitoringService.Services.Absrtacts;
 using System.ComponentModel.DataAnnotations;
@@ -28,35 +29,31 @@ public class PolicyService : IPolicyService
     public async Task<FilterDto?> GetFilterAsync(string id) =>
         await _repository.GetFilterAsync(id);
 
-    public async Task SaveFilterAsync(FilterDto filter)
-    {
-        var result = await _filterValidator.ValidateAsync(filter);
-        if (!result.IsValid)
-            throw new ValidationException("Validation Exception");
-
-        await _repository.SaveFilterAsync(filter);
-    }
-
-    public async Task DeleteFilterAsync(string id) =>
-        await _repository.DeleteFilterAsync(id);
-
     public async Task<IEnumerable<RateLimitRuleDto>> GetAllRulesAsync() =>
         await _repository.GetAllRulesAsync();
 
     public async Task<RateLimitRuleDto?> GetRuleAsync(string id) =>
         await _repository.GetRuleAsync(id);
 
-    public async Task SaveRuleAsync(RateLimitRuleDto rule)
+    public async Task<ValidationResultDto> SaveRuleAsync(RateLimitRuleDto rule, FilterDto filter)
     {
-        var result = await _ruleValidator.ValidateAsync(rule);
-        if (!result.IsValid)
-            throw new ValidationException("Validation Exception");
+        var filterResult = await _filterValidator.ValidateAsync(filter);
+        var ruleResult = await _ruleValidator.ValidateAsync(rule);
 
-        var filter = await _repository.GetFilterAsync(rule.FilterId);
-        if (filter == null)
-            throw new Exception($"FilterId {rule.FilterId} not found");
+        var errors = new List<string>();
 
-        await _repository.SaveRuleAsync(rule);
+        if (!filterResult.IsValid)
+            errors.AddRange(filterResult.Errors.Select(e => $"[Filter] {e.ErrorMessage}"));
+
+        if (!ruleResult.IsValid)
+            errors.AddRange(ruleResult.Errors.Select(e => $"[Rule] {e.ErrorMessage}"));
+
+        if (errors.Any())
+            return new ValidationResultDto { IsSuccess = false, Errors = errors };
+
+        await _repository.SaveRuleAsync(rule, filter);
+        return new ValidationResultDto { IsSuccess = true };
+
     }
 
     public async Task DeleteRuleAsync(string id) =>

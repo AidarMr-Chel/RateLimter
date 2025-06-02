@@ -1,5 +1,6 @@
 ﻿using ApiGateway.RateLimiting.configPolicy.modelsDto;
 using MonitoringService.Repositories.Abstracts;
+using MonitoringService.Services.Helpers;
 using StackExchange.Redis;
 using System.Text.Json;
 
@@ -50,20 +51,7 @@ public class PolicyRepository : IPolicyRepository
         return json.IsNullOrEmpty ? null : JsonSerializer.Deserialize<FilterDto>(json!, _jsonOptions);
     }
 
-    public async Task SaveFilterAsync(FilterDto filter)
-    {
-        var json = JsonSerializer.Serialize(filter, _jsonOptions);
-        await _db.SetAddAsync(FiltersSetKey, filter.Id);
-        await _db.StringSetAsync(FilterKeyPrefix + filter.Id, json);
-    }
-
-    public async Task DeleteFilterAsync(string id)
-    {
-        await _db.SetRemoveAsync(FiltersSetKey, id);
-        await _db.KeyDeleteAsync(FilterKeyPrefix + id);
-    }
-
-
+    
     public async Task<IEnumerable<RateLimitRuleDto>> GetAllRulesAsync()
     {
         var ids = await _db.SetMembersAsync(RulesSetKey);
@@ -89,16 +77,32 @@ public class PolicyRepository : IPolicyRepository
         return json.IsNullOrEmpty ? null : JsonSerializer.Deserialize<RateLimitRuleDto>(json!, _jsonOptions);
     }
 
-    public async Task SaveRuleAsync(RateLimitRuleDto rule)
+    public async Task SaveRuleAsync(RateLimitRuleDto rule, FilterDto filter)
     {
-        var json = JsonSerializer.Serialize(rule, _jsonOptions);
+        if (string.IsNullOrWhiteSpace(filter.Id))
+            filter.Id = "auto-" + FilterIdGenerator.ComputeHash(filter);
+
+        var jsonFilter = JsonSerializer.Serialize(filter, _jsonOptions);
+        await _db.SetAddAsync(FiltersSetKey, filter.Id);
+        await _db.StringSetAsync(FilterKeyPrefix + filter.Id, jsonFilter);
+
+        rule.FilterId = filter.Id;
+        var jsonRule = JsonSerializer.Serialize(rule, _jsonOptions);
         await _db.SetAddAsync(RulesSetKey, rule.Id);
-        await _db.StringSetAsync(RuleKeyPrefix + rule.Id, json);
+        await _db.StringSetAsync(RuleKeyPrefix + rule.Id, jsonRule);
     }
 
     public async Task DeleteRuleAsync(string id)
     {
+        var rule = await GetRuleAsync(id);
+        if (rule == null)
+            return;
+
         await _db.SetRemoveAsync(RulesSetKey, id);
         await _db.KeyDeleteAsync(RuleKeyPrefix + id);
+
+        await _db.SetRemoveAsync(FiltersSetKey, rule.FilterId);
+        await _db.KeyDeleteAsync(FilterKeyPrefix + rule.FilterId);
     }
+
 }

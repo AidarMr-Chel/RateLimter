@@ -7,9 +7,6 @@ public class FilterValidator : AbstractValidator<FilterDto>
 {
     public FilterValidator()
     {
-        RuleFor(f => f.Id)
-            .NotEmpty().WithMessage("Filter Id is required");
-
         RuleFor(f => f)
             .Must(HaveAtLeastOneFilter)
             .WithMessage("At least one filter condition (e.g., IP, Region, Path) must be specified");

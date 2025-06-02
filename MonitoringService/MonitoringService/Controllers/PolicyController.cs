@@ -1,5 +1,5 @@
-﻿using ApiGateway.RateLimiting.configPolicy.modelsDto;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
+using MonitoringService.Models.policy.modelsDto;
 using MonitoringService.Services.Absrtacts;
 
 namespace MonitoringService.Controllers;
@@ -26,20 +26,6 @@ public class PolicyController : ControllerBase
         return filter == null ? NotFound() : Ok(filter);
     }
 
-    [HttpPost("filters")]
-    public async Task<IActionResult> SaveFilter([FromBody] FilterDto filter)
-    {
-        await _service.SaveFilterAsync(filter);
-        return Ok();
-    }
-
-    [HttpDelete("filters/{id}")]
-    public async Task<IActionResult> DeleteFilter(string id)
-    {
-        await _service.DeleteFilterAsync(id);
-        return NoContent();
-    }
-
 
     [HttpGet("rules")]
     public async Task<IActionResult> GetAllRules() =>
@@ -53,10 +39,13 @@ public class PolicyController : ControllerBase
     }
 
     [HttpPost("rules")]
-    public async Task<IActionResult> SaveRule([FromBody] RateLimitRuleDto rule)
+    public async Task<IActionResult> SaveRule([FromBody] RuleCreateDto ruleCreate)
     {
-        await _service.SaveRuleAsync(rule);
-        return Ok();
+        var result = await _service.SaveRuleAsync(ruleCreate.Rule, ruleCreate.Filter);
+        if (!result.IsSuccess)
+            return BadRequest(result);
+
+        return Ok(result);
     }
 
     [HttpDelete("rules/{id}")]

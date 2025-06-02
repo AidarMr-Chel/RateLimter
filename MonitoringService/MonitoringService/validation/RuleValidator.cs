@@ -10,9 +10,6 @@ public class RuleValidator : AbstractValidator<RateLimitRuleDto>
         RuleFor(r => r.Id)
             .NotEmpty().WithMessage("Rule Id is required");
 
-        RuleFor(r => r.FilterId)
-            .NotEmpty().WithMessage("FilterId is required");
-
         RuleFor(r => r.Limit)
             .GreaterThan(0).WithMessage("Limit must be > 0");
 

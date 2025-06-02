@@ -2,7 +2,7 @@
 
 public class FilterDto
 {
-    public string Id { get; set; } = default!;
+    public string? Id { get; set; } = default!;
     public List<string>? Ip { get; set; }
     public List<string>? Region { get; set; }
     public List<string>? Country { get; set; }
