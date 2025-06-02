@@ -21,4 +21,11 @@ public class MetricsController : ControllerBase
         return Ok(metrics);
     }
 
+    [HttpGet("series")]
+    public async Task<IActionResult> GetMetricSeries([FromQuery] int rangeSeconds = 60, [FromQuery] int maxCount = 1000)
+    {
+        var series = await _metricService.GetMetricSeriesAsync(rangeSeconds, maxCount);
+        return Ok(series);
+    }
+
 }
