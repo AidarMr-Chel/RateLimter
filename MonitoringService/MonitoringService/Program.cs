@@ -31,6 +31,17 @@ public class Program
         services.AddScoped<RuleValidator>();
         services.AddScoped<IMetricService, MetricsService>();
 
+        services.AddCors(options =>
+        {
+            options.AddDefaultPolicy(policy =>
+            {
+                policy
+                    .AllowAnyOrigin()
+                    .AllowAnyMethod()
+                    .AllowAnyHeader();
+            });
+        });
+
 
 
         services.AddSingleton<IConnectionMultiplexer>(sp =>
@@ -39,7 +50,8 @@ public class Program
         });
 
         var app = builder.Build();
-        
+        app.UseCors();
+
         if (app.Environment.IsDevelopment())
         {
             app.UseSwagger();
