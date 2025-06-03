@@ -26,6 +26,11 @@ public class Program
 
         services.AddScoped<IPolicyRepository, PolicyRepository>();
         services.AddScoped<IPolicyService, PolicyService>();
+        services.AddScoped<IRpsMetricsRepository, RpsMetricsRepository>();
+        services.AddSingleton<ISystemEventLogRepository, SystemEventLogRepository>();
+
+        services.AddSingleton<ISystemEventLogRepository, SystemEventLogRepository>();
+        services.AddScoped<ISystemEventLogService, SystemEventLogService>();
 
         services.AddScoped<FilterValidator>();
         services.AddScoped<RuleValidator>();
@@ -46,7 +51,7 @@ public class Program
 
         services.AddSingleton<IConnectionMultiplexer>(sp =>
         {
-            return ConnectionMultiplexer.Connect("localhost:6380");
+            return ConnectionMultiplexer.Connect("localhost:6379");
         });
 
         var app = builder.Build();

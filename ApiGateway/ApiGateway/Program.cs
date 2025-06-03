@@ -18,6 +18,7 @@ using ApiGateway.RateLimiting.configPolicy.abstracts;
 using ApiGateway.RateLimiting.configPolicy.matching;
 using ApiGateway.RateLimiting.configPolicy.storage;
 using ApiGateway.RateLimiting.core.abstracts;
+using ApiGateway.Metrics;
 
 
 namespace ApiGateway;
@@ -65,7 +66,7 @@ public class Program
 
             services.AddSingleton<IConnectionMultiplexer>(sp =>
                 {
-                    return ConnectionMultiplexer.Connect("localhost:6380"); 
+                    return ConnectionMultiplexer.Connect("localhost:6379"); 
                 });
         
             services.AddSingleton<IRateLimitStore, RedisRateLimitStore>();
@@ -74,7 +75,8 @@ public class Program
 
             services.AddSingleton<ILogWriter, MongoLogWriter>();
             services.AddSingleton<IMasterLogService, MasterLogService>();
-
+            services.AddSingleton<IRpsAggregator, RpsAggregator>();
+ 
             services.AddHttpContextAccessor();
             services.AddSingleton<PolicyFactory>();
             services.AddHttpClient("UserApiClient", client =>
@@ -87,6 +89,7 @@ public class Program
             });
 
             services.AddScoped<IProxyService, ProxyService>();
+
 
 
 
@@ -107,6 +110,7 @@ public class Program
                     await middleware.InvokeAsync(context, next);
                 };
             });
+            app.UseMiddleware<RpsCountingMiddleware>();
             app.UseAuthorization();
             app.MapControllers();
             app.UseMiddleware<ExceptionMiddleware>();

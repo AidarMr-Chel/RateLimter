@@ -16,7 +16,7 @@ public class LogRepository : ILogRepository
         var setting = options.Value;
         var client = new MongoClient(setting.ConnectionString);
         var db = client.GetDatabase(setting.Database);
-        _logs = db.GetCollection<LogEntryDto>(setting.Collection);
+        _logs = db.GetCollection<LogEntryDto>(setting.LogEntryCollection);
     }
 
     public async Task<List<LogEntryDto>> GetLatestLogsAsync(int take)

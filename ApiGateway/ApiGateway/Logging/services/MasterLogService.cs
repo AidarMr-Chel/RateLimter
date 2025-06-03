@@ -33,6 +33,23 @@ public class MasterLogService : IMasterLogService
             
         };
 
-        await _writer.WriteAsync(log);
+        await _writer.WriteAsync<LogEntry>(log);
     }
+
+    public async Task LogInternalEventAsync(string type, string message, string? path = null, string? instance = null, DateTime? timestamp = null)
+    {
+        var evt = new SystemEventLogEntry
+        {
+            Timestamp = timestamp ?? DateTime.UtcNow,
+            EventType = type,
+            Message = message,
+            Path = path,
+            InstanceId = instance ?? _instanceId
+        };
+
+        await _writer.WriteAsync<SystemEventLogEntry>(evt);
+    }
+
+
+
 }

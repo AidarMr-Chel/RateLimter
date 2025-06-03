@@ -1,4 +1,4 @@
-﻿namespace MonitoringService.Models.loging.modelsDto;
+﻿namespace MonitoringService.Models.metrics;
 
 public class MetricPointDto
 {

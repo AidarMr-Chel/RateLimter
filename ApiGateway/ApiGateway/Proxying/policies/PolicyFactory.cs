@@ -1,6 +1,6 @@
 ﻿using ApiGateway.Logging.abstracts;
-using Polly.Extensions.Http;
 using Polly;
+using Polly.Extensions.Http;
 
 namespace ApiGateway.Proxying.policies;
 
@@ -22,15 +22,21 @@ public class PolicyFactory
         => HttpPolicyExtensions
             .HandleTransientHttpError()
             .OrResult(resp => (int)resp.StatusCode == 429)
-            .WaitAndRetryAsync(3,
+            .WaitAndRetryAsync(
+                3,
                 retryAttempt => TimeSpan.FromMilliseconds(200 * retryAttempt),
                 onRetry: async (outcome, delay, retryCount, _) =>
                 {
                     var ctx = _accessor.HttpContext;
-                    if (ctx != null)
-                    {
-                        await _logService.LogAsync(ctx, 0, $"RetryAttempt #{retryCount}: {outcome.Result?.StatusCode}");
-                    }
+
+                    var path = ctx?.Request.Path.Value ?? "unknown";
+                    var statusCode = (int?)outcome.Result?.StatusCode ?? -1;
+
+                    await _logService.LogInternalEventAsync(
+                        type: "RetryAttempt",
+                        message: $"Retry #{retryCount} — Status: {statusCode}",
+                        path: path
+                    );
                 });
 
     private IAsyncPolicy<HttpResponseMessage> GetCircuitBreakerPolicy()
@@ -43,10 +49,14 @@ public class PolicyFactory
                 onBreak: async (outcome, timespan) =>
                 {
                     var ctx = _accessor.HttpContext;
-                    if (ctx != null)
-                    {
-                        await _logService.LogAsync(ctx, 503, $"CircuitBreakerOpen: retry in {timespan.TotalSeconds:F0}s");
-                    }
+
+                    var path = ctx?.Request.Path.Value ?? "unknown";
+
+                    await _logService.LogInternalEventAsync(
+                        type: "CircuitBreakerOpen",
+                        message: $"Breaker opened, retry in {timespan.TotalSeconds:F0}s",
+                        path: path
+                    );
                 },
                 onReset: () => { },
                 onHalfOpen: () => { });

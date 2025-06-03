@@ -4,5 +4,5 @@ namespace ApiGateway.Logging.abstracts;
 
 public interface ILogWriter
 {
-    Task WriteAsync(LogEntry entry);
+    Task WriteAsync<T>(T entry);
 }
